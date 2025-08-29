@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversor de Dinero</title>
+    <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+
+    <div class="converter-container">
+        <h1>Simulador de Conversión de Dinero</h1>
+        <p>Ingrese un monto en Pesos Argentinos (ARS) para convertirlos a Dólares (USD)</p>
+
+        <form id="conversionForm">
+            <label for="montoARS">Monto en ARS:</label>
+            <input type="number" id="montoARS" placeholder="Ej: 50000" step="0.01" required>
+            <button type="submit">Convertir</button>
+        </form>
+
+        <div id="resultado" class="resultado-container">
+            </div>
+
+        <div class="historial-container">
+            <h2>Historial de Conversiones</h2>
+            <button id="limpiarHistorialBtn">Limpiar Historial</button>
+            <ol id="historialLista"></ol>
+        </div>
+    </div>
+
+    <script src="./js/main.js"></script>
+</body>
+</html>
