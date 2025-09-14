@@ -1,105 +1,133 @@
-/* Simulador de Conversión de Dinero */
+/*Simulador Interactivo de Conversión de Dinero*/
 
-// TASA DE CAMBIO FIJA (constante).
-const TASA_DE_CAMBIO_DOLAR = 1350.50;
-
-// SELECCIÓN DE ELEMENTOS DEL DOM
+//SELECCIÓN DE ELEMENTOS DEL DOM
 const conversionForm = document.getElementById('conversionForm');
 const montoARSInput = document.getElementById('montoARS');
+const monedaDestinoSelect = document.getElementById('monedaDestino');
 const resultadoDiv = document.getElementById('resultado');
 const historialLista = document.getElementById('historialLista');
 const limpiarHistorialBtn = document.getElementById('limpiarHistorialBtn');
 
-// CARGA INICIAL DEL HISTORIAL
+let tasasDeCambio = []; //Almacenamos las tasas obtenidas del JSON
 let historialConversiones = JSON.parse(localStorage.getItem('historialDeConversiones')) || [];
 
+//FUNCIONES
 /**
-* con esto realizamos el cálculo de conversión
-* @param {number} montoARS - dinero en pesos argentinos
-* @returns {number} - dinero equivalente en dólares
-*/
-function convertirADolares(montoARS) {
-    return montoARS / TASA_DE_CAMBIO_DOLAR;
-}
+ * aca cargamos las tasas de cambio desde un archivo JSON local de forma asíncrona
+ */
+const cargarTasasDeCambio = async () => {
+    try {
+        const response = await fetch('./db.json');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        tasasDeCambio = data.monedas;
+        popularSelectorDeMonedas();
+    } catch (error) {
+        console.error("Error al cargar las tasas de cambio:", error);
+        mostrarError('No se pudieron cargar las cotizaciones. Intente más tarde.');
+    }
+};
 
 /**
-* Mostramos el resultado de la conversión en el DOM
-* @param {number} montoARS - dinero original en pesos.
-* @param {number} montoUSD - dinero convertido a dólares.
-*/
-function mostrarResultadoEnHTML(montoARS, montoUSD) {
-    resultadoDiv.classList.remove('error');
+ * Rellenamos el <select> del HTML con las monedas cargadas desde el JSON
+ */
+const popularSelectorDeMonedas = () => {
+    monedaDestinoSelect.innerHTML = ''; //Limpiamos opciones anteriores
+    tasasDeCambio.forEach(moneda => {
+        const option = document.createElement('option');
+        option.value = moneda.id;
+        option.textContent = moneda.nombre;
+        monedaDestinoSelect.appendChild(option);
+    });
+};
+
+/**
+ * aca mostramos el resultado de la conversión en el DOM
+ * @param {object} conversion - objeto de la conversión
+ */
+const mostrarResultadoEnHTML = (conversion) => {
+    const { montoARS, montoConvertido, monedaNombre, tasa } = conversion;
     resultadoDiv.innerHTML = `
-        <p><strong>$${montoARS.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} ARS</strong> equivalen a:</p>
-        <h2>$${montoUSD.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} USD</h2>
-        <small>Tasa de cambio: ${TASA_DE_CAMBIO_DOLAR.toLocaleString('es-AR')} ARS/USD</small>
+        <p><strong>$${montoARS.toLocaleString('es-AR')} ARS</strong> equivalen a:</p>
+        <h2>${montoConvertido.toLocaleString('es-AR', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 })} ${monedaNombre}</h2>
+        <small>Tasa de cambio utilizada: ${tasa.toLocaleString('es-AR')} ARS/${monedaNombre.split(' ')[1]}</small>
     `;
-}
+};
 
 /**
-* aca mostramos un msj de error en el DOM
-* @param {string} mensaje - msj de error a mostrar
-*/
-function mostrarError(mensaje) {
-    resultadoDiv.classList.add('error');
-    resultadoDiv.innerHTML = `<p><strong>Error:</strong> ${mensaje}</p>`;
-}
+ * Muestramos un mensaje de error utilizando la librería SweetAlert2
+ * @param {string} mensaje - Mensaje de error
+ */
+const mostrarError = (mensaje) => {
+    Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: mensaje,
+        confirmButtonColor: '#007bff'
+    });
+};
 
 /**
-* FUNCION
-* Renderizamos el historial completo de conversiones en la lista del HTML de forma optimizada
-*/
-function renderizarHistorial() {
+ * aca Renderizamos el historial completo de conversiones en la lista del HTML
+ */
+const renderizarHistorial = () => {
     if (historialConversiones.length === 0) {
         historialLista.innerHTML = '<li>Aún no se han realizado conversiones.</li>';
         return;
     }
 
-    //Hacemos una copia e invertimos el array para mostrar lo más nuevo primero
     const historialInvertido = [...historialConversiones].reverse();
+    const listaHTML = historialInvertido.map(conv => `
+        <li>
+            <strong>Fecha:</strong> ${conv.fecha}<br>
+            <strong>Convertido:</strong> $${conv.montoARS.toLocaleString('es-AR')} ARS a 
+            $${conv.montoConvertido.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${conv.monedaNombre}
+        </li>
+    `).join('');
 
-    //Uso map() para transformar cada objeto de conversión en un string de HTML (un <li>)
-    const listaHTML = historialInvertido.map(conversion => {
-        return `
-            <li>
-                <strong>Fecha:</strong> ${conversion.fecha}<br>
-                <strong>Convertido:</strong> $${conversion.montoARS.toLocaleString('es-AR')} ARS a $${conversion.montoUSD.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} USD
-            </li>
-        `;
-    }).join(''); //aca Unimos todos los strings <li> en uno solo
-
-    //Actualizamos el DOM una sola vez, lo que es más eficiente
     historialLista.innerHTML = listaHTML;
-}
+};
 
 /**
-* Guardamos el array del historial en localStorage
-*/
-function guardarHistorialEnStorage() {
+ * Guardamos el array del historial en localStorage
+ */
+const guardarHistorialEnStorage = () => {
     localStorage.setItem('historialDeConversiones', JSON.stringify(historialConversiones));
-}
+};
 
-// Evento para el envío del formulario
-conversionForm.addEventListener('submit', function(event) {
-    event.preventDefault(); // Prevenimos la recarga de la página
+// ESTOS SON LOS MANEJADORES DE EVENTOS
+
+conversionForm.addEventListener('submit', (event) => {
+    event.preventDefault();
 
     const montoIngresado = parseFloat(montoARSInput.value);
+    const monedaSeleccionadaId = monedaDestinoSelect.value;
 
     if (isNaN(montoIngresado) || montoIngresado <= 0) {
         mostrarError("Por favor, ingrese un número válido y mayor a cero.");
         return;
     }
 
-    const montoConvertido = convertirADolares(montoIngresado);
-    mostrarResultadoEnHTML(montoIngresado, montoConvertido);
+    const moneda = tasasDeCambio.find(m => m.id === monedaSeleccionadaId);
+    if (!moneda) {
+        mostrarError("Moneda no válida. Por favor, recargue la página.");
+        return;
+    }
 
+    const montoConvertido = montoIngresado / moneda.tasaVenta;
+    
     const conversionActual = {
         fecha: new Date().toLocaleString('es-AR'),
         montoARS: montoIngresado,
-        montoUSD: montoConvertido,
-        tasaDeCambio: TASA_DE_CAMBIO_DOLAR
+        montoConvertido: montoConvertido,
+        monedaId: moneda.id,
+        monedaNombre: moneda.nombre,
+        tasa: moneda.tasaVenta
     };
 
+    mostrarResultadoEnHTML(conversionActual);
     historialConversiones.push(conversionActual);
     guardarHistorialEnStorage();
     renderizarHistorial();
@@ -107,13 +135,34 @@ conversionForm.addEventListener('submit', function(event) {
     conversionForm.reset();
 });
 
-// Evento para el botón de limpiar historial
-limpiarHistorialBtn.addEventListener('click', function() {
-    historialConversiones = [];
-    guardarHistorialEnStorage();
-    renderizarHistorial();
+limpiarHistorialBtn.addEventListener('click', () => {
+    // Usamos SweetAlert2 para confirmar la acción
+    Swal.fire({
+        title: '¿Estás seguro?',
+        text: "¡No podrás revertir esta acción!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Sí, ¡bórralo!',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            historialConversiones = [];
+            guardarHistorialEnStorage();
+            renderizarHistorial();
+            Swal.fire(
+                '¡Borrado!',
+                'El historial de conversiones ha sido eliminado.',
+                'success'
+            );
+        }
+    });
 });
 
 // INICIALIZACIÓN
-// Al cargar la página, renderizamos el historial guardado
-renderizarHistorial();
+// Al cargar la página cargamos las tasas y renderizamos el historial guardado
+document.addEventListener('DOMContentLoaded', () => {
+    cargarTasasDeCambio();
+    renderizarHistorial();
+});

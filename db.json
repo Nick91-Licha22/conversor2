@@ -1,0 +1,24 @@
+{
+  "monedas": [
+    {
+      "id": "USD_BLUE",
+      "nombre": "Dólar Blue",
+      "tasaVenta": 1350.50
+    },
+    {
+      "id": "USD_OFICIAL",
+      "nombre": "Dólar Oficial",
+      "tasaVenta": 1020.00
+    },
+    {
+      "id": "EUR",
+      "nombre": "Euro",
+      "tasaVenta": 1450.75
+    },
+    {
+      "id": "BRL",
+      "nombre": "Real Brasileño",
+      "tasaVenta": 250.20
+    }
+  ]
+}
