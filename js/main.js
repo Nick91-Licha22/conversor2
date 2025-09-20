@@ -48,11 +48,15 @@ const popularSelectorDeMonedas = () => {
  * @param {object} conversion - objeto de la conversión
  */
 const mostrarResultadoEnHTML = (conversion) => {
-    const { montoARS, montoConvertido, monedaNombre, tasa } = conversion;
+    const { montoARS, montoConvertido, monedaNombre, tasa, monedaCodigo } = conversion; 
     resultadoDiv.innerHTML = `
         <p><strong>$${montoARS.toLocaleString('es-AR')} ARS</strong> equivalen a:</p>
-        <h2>${montoConvertido.toLocaleString('es-AR', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 })} ${monedaNombre}</h2>
-        <small>Tasa de cambio utilizada: ${tasa.toLocaleString('es-AR')} ARS/${monedaNombre.split(' ')[1]}</small>
+        <h2>${montoConvertido.toLocaleString('es-AR', { 
+            style: 'currency', 
+            currency: monedaCodigo, 
+            minimumFractionDigits: 2 
+        })}</h2>
+        <small>Tasa de cambio utilizada: ${tasa.toLocaleString('es-AR')} ARS/${monedaCodigo}</small> 
     `;
 };
 
@@ -124,6 +128,7 @@ conversionForm.addEventListener('submit', (event) => {
         montoConvertido: montoConvertido,
         monedaId: moneda.id,
         monedaNombre: moneda.nombre,
+        monedaCodigo: moneda.codigo,
         tasa: moneda.tasaVenta
     };
 

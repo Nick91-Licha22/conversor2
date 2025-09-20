@@ -3,21 +3,25 @@
     {
       "id": "USD_BLUE",
       "nombre": "Dólar Blue",
+      "codigo": "USD",  
       "tasaVenta": 1350.50
     },
     {
       "id": "USD_OFICIAL",
       "nombre": "Dólar Oficial",
+      "codigo": "USD",  
       "tasaVenta": 1020.00
     },
     {
       "id": "EUR",
       "nombre": "Euro",
+      "codigo": "EUR",  
       "tasaVenta": 1450.75
     },
     {
       "id": "BRL",
       "nombre": "Real Brasileño",
+      "codigo": "BRL",  
       "tasaVenta": 250.20
     }
   ]
